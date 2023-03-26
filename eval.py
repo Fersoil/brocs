@@ -17,17 +17,19 @@ import random
 from cs import connected_sequential
 from brooks import brooks
 
+from scripts import delta, check_coloring
 
 
 
 
 
 
-G = nx.graph_atlas(1200)
+
+G = nx.graph_atlas(800) # to jest prawie rybka
 nx.draw(G) # uncolored
 nodes = list(G.nodes())
 m = len(nodes)
-
+plt.clf()
 random.seed(44)
 
 
@@ -46,8 +48,11 @@ def evaluate(G, func):
     
     unique_colors = len(set(colors))
     time_elapsed = "bardzo mało"
+    G_delta = delta(G)
+    G_coloring_correct = check_coloring(G, colors)
     
-    print(f"Colored graph G of {G.number_of_nodes()} vertices and {G.number_of_edges()} edges;",
+    print(f"Colored graph G of {G.number_of_nodes()} vertices and {G.number_of_edges()} edges with maximum vertex degree of {G_delta}",
+          f"colored using {func.__name__}, coloring is correct: {G_coloring_correct}",
           f"Used {unique_colors} colors; Time elapsed: {time_elapsed}")
     
     eval_dict = {"time_elapsed":time_elapsed, "unique_colors":unique_colors}
@@ -58,6 +63,6 @@ def evaluate(G, func):
 
 
 
-evaluate(G, connected_sequential)
+evaluate(G, brooks)
 
     

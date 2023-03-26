@@ -30,6 +30,9 @@ def connected_sequential(G):
     """
     nodes = list(G.nodes())
     m = len(nodes)
+
+
+    # TODO - check if graph is connected
     
     colors = [-1] * m
     
