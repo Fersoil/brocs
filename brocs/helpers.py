@@ -7,20 +7,24 @@ Connected sequential algorithm
 @author: tymot
 """
 
-import queue
-import random
+import logging
+from typing import List
+
+from networkx import Graph
+
+logger = logging.getLogger("main")
 
 
-
-def delta(G):
+def delta(G: Graph) -> int:
     """
-    return Delta of G - the maximal degree of vertex
+    Returns:
+        Delta of G - the maximal degree of verticies
     """
     nodes = list(G.nodes())
     m = len(nodes)
     if m <= 0:
         return 0
-    
+
     delta = len(list(G.neighbors(nodes[0])))
     v = 0
 
@@ -30,23 +34,16 @@ def delta(G):
             delta = number_of_neighbors
             v = node
 
-    print(f"The greatest degree has vertex number {v}. It has degree of {delta}")
+    logger.debug(f"The greatest degree has vertex number {v}.")
+    logger.debug(f"It has degree of {delta}")
     return delta
-    
 
 
-def check_coloring(G, colors):
+def validate_coloring(G: Graph, colors: List[int]) -> bool:
     nodes = list(G.nodes())
-    m = len(nodes)
-    
-    
+
     for v in nodes:
         for neighbor in list(G.neighbors(v)):
             if colors[neighbor] == colors[v]:
                 return False
-        return True
-        
-        
-        
-        
-        
+    return True
