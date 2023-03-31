@@ -8,7 +8,7 @@ Connected sequential algorithm
 """
 
 import logging
-import queue
+from queue import Queue
 import random
 from typing import List, Optional
 
@@ -57,7 +57,7 @@ class ConnectedSequential(ColoringAlgorithm):
         colors = [-1] * m
 
         forbidden_colors = []
-        q = queue.Queue()
+        q = Queue()
         q.put(random.randint(0, m - 1))  # put random first vertex
 
         while not q.empty():
