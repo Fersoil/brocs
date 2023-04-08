@@ -8,14 +8,14 @@ Connected sequential algorithm
 """
 
 import logging
-from typing import List
+from typing import List, Set, Optional, Tuple
 
-from networkx import Graph
+import networkx as nx
 
 logger = logging.getLogger("main")
 
 
-def delta(G: Graph) -> int:
+def delta(G: nx.Graph) -> int:
     """
     Returns:
         Delta of G - the maximal degree of verticies
@@ -39,7 +39,7 @@ def delta(G: Graph) -> int:
     return delta
 
 
-def validate_coloring(G: Graph, colors: List[int]) -> bool:
+def validate_coloring(G: nx.Graph, colors: List[int]) -> bool:
     nodes = list(G.nodes())
 
     for v in nodes:
@@ -47,3 +47,47 @@ def validate_coloring(G: Graph, colors: List[int]) -> bool:
             if colors[neighbor] == colors[v]:
                 return False
     return True
+
+
+def find_common_neighbor(G: nx.Graph, a: int, b: int):
+    a_neighbors = G.neighbors(a)
+    b_neighbors = G.neighbors(b)
+
+    common_neighbors = list(set(a_neighbors) & set(b_neighbors))
+
+    if not common_neighbors:
+        raise ValueError("wrong input")
+
+    return common_neighbors[0]
+
+
+def dist_two(G: nx.Graph) -> Set[Tuple[int, int]]:
+    """Find all pairs of vertices of distance 2 between them.
+    Might improve one day with a laplacian matrix
+    """
+    dist_two_set = set()
+    for v in G.nodes():
+        v_neighbors = list(G.neighbors(v))  # take all neighbors of v
+        for v_neighbor in v_neighbors:
+            for second_neighbor in G.neighbors(v_neighbor):
+                if second_neighbor != v and second_neighbor not in v_neighbors:
+                    if second_neighbor <= v:
+                        dist_two_set.add((second_neighbor, v))
+                    if second_neighbor > v:
+                        dist_two_set.add((v, second_neighbor))
+
+    return dist_two_set
+
+
+def dist_two_from(G: nx.Graph, a: int) -> Optional[int]:
+    """Find any vetrex of distance 2 from vetrex a
+    Also might improve with laplacian matrix
+    """
+    a_neighbors = list(G.neighbors(a))
+
+    for v in a_neighbors:
+        for second_neighbor in G.neighbors(v):
+            if second_neighbor != a and second_neighbor not in a_neighbors:
+                return second_neighbor
+
+    return None
