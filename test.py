@@ -9,11 +9,14 @@ from brocs.helpers import delta
 cs = ConnectedSequential()
 br = BrooksAlgorithm()
 
-# g = graphs.fish()
-g = graphs.path()
+g = graphs.fish()
+# g = graphs.path()
 # g = graphs.fence()
 # g = graphs.domek()
 # g = graphs.lopata()
+# g = graphs.bipartite()
+# g = nx.graph_atlas(1200)
+
 
 print(f"Delta of the graph G: {delta(g)}")
 nx.draw(g, with_labels=True)
