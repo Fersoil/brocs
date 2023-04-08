@@ -14,6 +14,13 @@ import networkx as nx
 
 logger = logging.getLogger("main")
 
+def check_graph(graph: nx.Graph):
+    nodes = set(graph.nodes())
+    expected_nodes = set(range(len(nodes)))
+    assert len(nodes.union(expected_nodes)) == len(
+        nodes
+    ), "Graph should have nodes labeled from 0 to n-1"
+
 
 def delta(G: nx.Graph) -> int:
     """
@@ -91,3 +98,4 @@ def dist_two_from(G: nx.Graph, a: int) -> Optional[int]:
                 return second_neighbor
 
     return None
+
