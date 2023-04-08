@@ -1,9 +1,8 @@
 import networkx as nx
 
 
-def fish_graph() -> nx.Graph:
+def fish() -> nx.Graph:
     return nx.graph_atlas(800)
-
 
 
 def path() -> nx.Graph:
@@ -24,7 +23,6 @@ def fence() -> nx.Graph:
 
 def bipartite() -> nx.Graph:
     return nx.complete_bipartite_graph(5, 2)
-
 
 
 def domek() -> nx.Graph:

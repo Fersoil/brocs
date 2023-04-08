@@ -13,10 +13,12 @@ from typing import List, Optional
 
 import networkx as nx
 
-from brocs.algorithms import ConnectedSequential, ColoringAlgorithm
-from brocs.helpers import find_common_neighbor, dist_two, dist_two_from
+from brocs.algorithms.base import ColoringAlgorithm
+from brocs.algorithms.cs import ConnectedSequential
+from brocs.helpers import dist_two, dist_two_from, find_common_neighbor
 
 logger = logging.getLogger("[BROOKS]")
+
 
 class BrooksAlgorithm(ColoringAlgorithm):
     """Graphs coloring algorithm based on the proof
@@ -84,8 +86,7 @@ class BrooksAlgorithm(ColoringAlgorithm):
             logger.info("Graph G is complete")
             return list(range(number_of_nodes))
 
-
-        # Serach for optimal a and b vertexes 
+        # Serach for optimal a and b vertexes
         is_two_connected = True
         for pair in S:
             reduced_vertices = [i for i in range(number_of_nodes) if i not in pair]
@@ -226,8 +227,12 @@ class BrooksAlgorithm(ColoringAlgorithm):
                     x_neighbors = set(G.neighbors(x))
 
                     # select a and b from endblocks
-                    a = ((set(components[0]) - {disjoint_points[0]}) & x_neighbors).pop()
-                    b = ((set(components[1]) - {disjoint_points[1]}) & x_neighbors).pop()
+                    a = (
+                        (set(components[0]) - {disjoint_points[0]}) & x_neighbors
+                    ).pop()
+                    b = (
+                        (set(components[1]) - {disjoint_points[1]}) & x_neighbors
+                    ).pop()
 
         # =============================================================================
         #                 reduced_vertices = [i for i in range(m) if i != x]
@@ -250,8 +255,6 @@ class BrooksAlgorithm(ColoringAlgorithm):
 
         if not x:
             x = find_common_neighbor(G, a, b)
-
-        nx.draw(G, with_labels=True)
 
         q = LifoQueue()
         neighbors_queue = Queue()
@@ -278,7 +281,6 @@ class BrooksAlgorithm(ColoringAlgorithm):
 
         while not q.empty():
             v = q.get()
-            print(v)
             if colors[v] == -1:
                 # if the actual vertex is uncolored
                 neighbors = G.neighbors(v)
@@ -294,4 +296,3 @@ class BrooksAlgorithm(ColoringAlgorithm):
                 colors[v] = color  # color the choosen vertex
 
         return colors
-

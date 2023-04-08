@@ -12,7 +12,7 @@ from queue import Queue
 import random
 from typing import List, Optional
 
-
+import networkx as nx
 from networkx.classes import Graph
 
 from brocs.algorithms.base import ColoringAlgorithm
@@ -48,6 +48,11 @@ class ConnectedSequential(ColoringAlgorithm):
     def color_graph(self, G: Graph) -> List[int]:
         if self.random_state is not None:
             random.seed(self.random_state)
+
+        # Relabel graph G
+        nodes = G.nodes()
+        mapping = dict(zip(nodes, range(len(nodes))))
+        G = nx.relabel_nodes(G, mapping)
 
         nodes = list(G.nodes())
         m = len(nodes)
