@@ -32,4 +32,3 @@ setup(
         "Topic :: Scientific/Engineering :: Visualization",
     ],
 )
-

@@ -1,14 +1,13 @@
+from colorsys import hls_to_rgb
 from typing import List
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-from colorsys import hls_to_rgb
 
 from brocs.helpers import check_graph
 
 
-# Create a function that returns a list of random colors in hex format
 def get_random_colors(n: int) -> List[str]:
     colors = []
     for i in np.linspace(0, 1, n + 1):
@@ -42,4 +41,3 @@ def show_colored_graph(graph: nx.Graph, coloring: List[int], figsize: tuple = (1
     nx.draw(graph, ax=ax, with_labels=True, node_color=color_map)
     plt.show()
     plt.close(fig)
-

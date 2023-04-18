@@ -8,11 +8,12 @@ Connected sequential algorithm
 """
 
 import logging
-from typing import List, Set, Optional, Tuple
+from typing import List, Optional, Set, Tuple
 
 import networkx as nx
 
 logger = logging.getLogger("main")
+
 
 def check_graph(graph: nx.Graph):
     nodes = set(graph.nodes())
@@ -98,4 +99,3 @@ def dist_two_from(G: nx.Graph, a: int) -> Optional[int]:
                 return second_neighbor
 
     return None
-

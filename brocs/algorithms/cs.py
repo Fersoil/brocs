@@ -8,8 +8,8 @@ Connected sequential algorithm
 """
 
 import logging
-from queue import Queue
 import random
+from queue import Queue
 from typing import List, Optional
 
 import networkx as nx
