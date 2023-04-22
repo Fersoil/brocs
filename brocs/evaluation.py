@@ -1,10 +1,9 @@
 import logging
 import time
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import List
 
 import networkx as nx
-from matplotlib import pyplot as plt
 
 from brocs.algorithms.base import ColoringAlgorithm
 from brocs.helpers import delta, validate_coloring

@@ -5,7 +5,10 @@ from networkx import Graph
 
 
 class ColoringAlgorithm(ABC):
+    name: str
+
     def __init__(self) -> None:
+        self.name = self.__class__.__name__
         super().__init__()
 
     @abstractmethod

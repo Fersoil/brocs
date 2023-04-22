@@ -1,67 +1,22 @@
 import argparse
 import logging
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Any, Optional, Protocol
 
 import networkx as nx
 import numpy as np
 
-from brocs.algorithms import BrooksAlgorithm, ConnectedSequential
+from brocs.algorithms import (BrooksAlgorithm, ColoringAlgorithm,
+                              ConnectedSequential)
 from brocs.evaluation import evaluate_graph
-
-"""
-Dzień dobry, najlepiej przygotować kilka przykładowych grafów do wczytania z osobnego pliku, tak aby łatwo można było dodać kolejne grafy. W tym kilka małych grafów, na których można sprawdzić jak nasze kolorowanie wygląda i co najmniej 2 większe do testów prędkości obliczeń. Do tego przy uruchomieniu aplikacji wyświetlić pytanie "Który algorytm chcesz przetestować?" z opcjami 1. connected sequential, 2. algorytm Lovasa, 3. oba. Jeśli algorytmy mają elementy randomizacji (np. losowy wybór wierzchołka przy "remisie" w kryterium wyboru) można dodatkowo spytać "Ile testów chcesz wykonać?". Potem "Podaj nazwę pliku z grafem do pokolorowania". Wczytuje podany plik i koloruje. Zwraca 1. liczbę użytych kolorów, 2. czas obliczeń, 3. wrzuca do pliku otrzymane kolorowanie (liczba kolorów i czas też mogą być w pliku, w przypadku kilku testów albo zapisujemy wszystkie kolorowania, albo tylko jedno). Dla wielu testów najlepiej wyświetlić uśrednione liczby kolorów i czasy obliczeń, a przy stosunkowo małej liczbie testów można też podać poszczególne wyniki. A potem pyta "Czy chcesz wybrać inny algorytm?" i "Czy chcesz zmienić graf?", no i liczymy od początku. Można to tak zaimplementować, żeby najpierw sprawdzał, czy już nie ma pliku z wynikiem i jeśli tak omija obliczenia lub pyta użytkownika czy chce liczyć ponownie, czy wyświetlić poprzedni wynik. Wszelkie komunikaty oczywiście mogą Państwo napisać po swojemu. Właściwie wszystko można inaczej niż napisałam, daję tylko wstępną propozycję.
-"""
+from brocs.visualization import show_colored_graph, show_graph
 
 logger = logging.getLogger(__name__)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Brocs")
-    parser.add_argument(
-        "input",
-        help="path to a input file with graph matrix or a directory with input files",
-    )
-    parser.add_argument(
-        "--lovas", action="store_true", help="run Lovas Algorithm on input"
-    )
-    parser.add_argument(
-        "--connected-sequential",
-        "--cs",
-        action="store_true",
-        help="run Connected Sequential Algorithm on input",
-    )
-    parser.add_argument(
-        "--visualization",
-        action="store_true",
-        help="Show visualization of the graph coloring",
-    )
-
-    args = parser.parse_args()
-    args.input = Path(args.input).expanduser()
-
-    run_program(args)  # type: ignore
-
-
 class Settings(Protocol):
     input: Path
-    lovas: bool
-    connected_sequential: bool
-    visualization: bool
-
-
-def run_program_on_graph(graph: nx.Graph, settings: Settings):
-    if settings.lovas:
-        print("Running Lovas Algorithm")
-        raport = evaluate_graph(graph, BrooksAlgorithm())
-        if settings.visualization:
-            raport.visualize_coloring()
-
-    if settings.connected_sequential:
-        print("Running Connected Sequential")
-        raport = evaluate_graph(graph, ConnectedSequential())
-        if settings.visualization:
-            raport.visualize_coloring()
 
 
 def load_graph_from_file(file: Path) -> Optional[nx.Graph]:
@@ -78,36 +33,207 @@ def load_graph_from_file(file: Path) -> Optional[nx.Graph]:
     return nx.from_numpy_array(loaded_file)
 
 
-def run_program(settings: Settings):
-    if not settings.input.exists():
-        logger.error(f"Path {settings.input} does not exist")
-        # TODO: Add print info
-        exit(1)
+@dataclass
+class GraphResults:
+    graph: nx.Graph
+    results: dict[str, Any] = field(default_factory=dict)
 
-    if not settings.lovas and not settings.connected_sequential:
-        logger.error("You have to choose at least one algorithm")
-        # TODO: Add print info
-        exit(1)
 
-    if settings.input.is_dir():
-        logger.info("Running program on a directory")
-        # Iterate over files that are numpy files
-        input_file_list = list(settings.input.glob("*.npy"))
-        # Change that to f string
-        logger.info(
-            f"Found {len(input_file_list)} npy files in directory {settings.input}"
-        )  # noqa
+@dataclass
+class Program:
+    settings: Settings
+    loaded_graphs: dict[str, GraphResults] = field(default_factory=dict)
 
-        for file in input_file_list:
-            graph = load_graph_from_file(file)
-            if graph:
-                run_program_on_graph(graph, settings)
-    else:
-        graph = load_graph_from_file(settings.input)
-        if graph is None:
-            logger.error("Given graph file is not a valid graph")
+    def load_graphs_from_path(self, path: Path) -> dict[str, nx.Graph]:
+        new_graphs = {}
+        if path.is_dir():
+            logger.info(f"Loading graphs from directory {path}")
+            # Iterate over files that are numpy files
+            input_file_list = list(path.glob("*.npy"))
+            logger.info(f"Found {len(input_file_list)} npy files in directory {path}")
+            for file in input_file_list:
+                graph = load_graph_from_file(file)
+                if graph is not None:
+                    new_graphs.update({path.stem: graph})
+        elif path.is_file():
+            graph = load_graph_from_file(path)
+            if graph is not None:
+                new_graphs.update({path.stem: graph})
+        return new_graphs
+
+    def cast_graphs_to_graph_results(
+        self, graphs: dict[str, nx.Graph]
+    ) -> dict[str, GraphResults]:
+        graph_results = {}
+        for graph_name, graph in graphs.items():
+            graph_results.update({graph_name: GraphResults(graph=graph)})
+        return graph_results
+
+    def load_graphs(self, new_graphs_path: Optional[Path] = None):
+        path = self.settings.input if new_graphs_path is None else new_graphs_path
+        new_graphs = []
+        if not path.exists():
+            error_message = f"Path {self.settings.input} does not exist. Exiting..."
+            print(error_message)
+            logger.error(error_message)
+            if new_graphs_path is not None:
+                return
             exit(1)
-        run_program_on_graph(graph, settings)
+
+        new_graphs = self.load_graphs_from_path(path)
+        self.loaded_graphs.update(self.cast_graphs_to_graph_results(new_graphs))
+        print(f"Loaded {len(new_graphs)} new graphs")
+        print(f"Total number of graphs: {len(self.loaded_graphs)}")
+
+    def visualize_selected_graph(self):
+        print("Here are the loaded graphs")
+        graph_name_list = list(self.loaded_graphs.keys())
+        for i, graph_name in enumerate(graph_name_list):
+            print(f"{i+1}. {graph_name}")
+        choices = list(range(1, len(self.loaded_graphs) + 1))
+        choice = take_user_input("Which graph do you want to visualize? >>> ", choices)
+        choosen_graph = graph_name_list[choice - 1]
+
+        graph = self.loaded_graphs[choosen_graph].graph
+        results = self.loaded_graphs[choosen_graph].results
+
+        print("Possible vies of the graph: ")
+        print("1. Barebone Graph")
+        choices = [1]
+        if "BrooksAlgorithm" in results:
+            print("2. Last coloring by Brooks Algorithm")
+            print("3. Best coloring found by Brooks Algorithm")
+            choices.append(2)
+            choices.append(3)
+        if "ConnectedSequential" in results:
+            print("4. Last coloring by Connected Sequential Algorithm")
+            print("5. Last coloring by Connected Sequential Algorithm")
+            choices.append(4)
+            choices.append(5)
+        choice = take_user_input("Which view do you pick? >>> ", choices)
+
+        if choice == 1:
+            show_graph(graph)
+        elif choice == 2:
+            show_colored_graph(
+                graph, results["BrooksAlgorithm"]["last_result"].coloring
+            )
+        elif choice == 3:
+            show_colored_graph(graph, results["BrooksAlgorithm"]["best_coloring"])
+        elif choice == 4:
+            show_colored_graph(
+                graph, results["ConnectedSequential"]["last_result"].coloring
+            )
+        elif choice == 5:
+            show_colored_graph(graph, results["ConnectedSequential"]["best_coloring"])
+
+    def run_algorith_on_loaded_graphs(
+        self, algorithm: ColoringAlgorithm, repeat: Optional[int] = None
+    ):
+        if repeat is None:
+            for graph_name, graph_results in self.loaded_graphs.items():
+                alg_name = algorithm.name
+                print(f"  Running {algorithm} on graph: {graph_name}")
+                new_results = evaluate_graph(graph_results.graph, algorithm)
+                graph_results.results.update({alg_name: {"last_result": new_results}})
+                print(
+                    f"  Finished running {algorithm} on graph: {graph_name} in {new_results.time_elapsed} seconds"  # noqa
+                )
+            return
+
+        for graph_name, graph_results in self.loaded_graphs.items():
+            alg_name = algorithm.name
+            total_time = 0
+            colorings = []
+            new_results = None
+
+            print(f"  Running {algorithm} on graph: {graph_name} {repeat} times")
+            for _ in range(repeat):
+                new_results = evaluate_graph(graph_results.graph, algorithm)
+                total_time += new_results.time_elapsed
+                colorings.append(new_results.coloring)
+
+            best_coloring = None
+            min_number_of_colors = float("inf")
+            for coloring in colorings:
+                if len(coloring) < min_number_of_colors:
+                    min_number_of_colors = len(coloring)
+                    best_coloring = coloring
+            average_time = total_time / repeat
+
+            print(
+                f"  Finished running {algorithm} on graph: {graph_name} in {average_time} seconds" # noqa
+            )
+            print(f"  Best coloring had {min_number_of_colors} colors")
+
+            graph_results.results.update(
+                {
+                    alg_name: {
+                        "last_result": new_results,
+                        "average_time": average_time,
+                        "min_number_of_colors": min_number_of_colors,
+                        "best_coloring": best_coloring,
+                    }
+                }
+            )
+
+    def run(self):
+        self.load_graphs()
+        print("Here is what you can do: ")
+        print("1. Visaize one of the loaded graphs or their calculated colorings")
+        print("2. Run CS algorithm on loaded graphs (once)")
+        print("3. Run Brooks algorithm on loaded graphs (once)")
+        print("4. Run both algorithms on loaded graphs (n times) and compare results ")
+        print("5. Load new graphs")
+        print("6. Exit program")
+        choice = take_user_input("What do you want to do? >>> ", [1, 2, 3, 4, 5])
+        if choice == 1:
+            self.visualize_selected_graph()
+            self.run()
+        elif choice == 2:
+            self.run_algorith_on_loaded_graphs(ConnectedSequential(random_state=42))
+        elif choice == 3:
+            self.run_algorith_on_loaded_graphs(BrooksAlgorithm(random_state=42))
+        elif choice == 4:
+            n = take_user_input(
+                "How many times do you want to run the algorithms? >>> ",
+                [],
+                any_int=True,
+            )
+            self.run_algorith_on_loaded_graphs(ConnectedSequential(), repeat=n)
+            self.run_algorith_on_loaded_graphs(BrooksAlgorithm(), repeat=n)
+            # TODO: Add comparison
+        elif choice == 5:
+            input_path = input("Enter path to the folder with new graphs >>> ")
+            self.load_graphs(new_graphs_path=Path(input_path).expanduser())
+        elif choice == 6:
+            print("Exiting program...")
+            exit(0)
+
+
+def take_user_input(message: str, possilities: list[int], any_int=False) -> int:
+    while True:
+        user_input = input(message)
+        if user_input.isdigit():
+            if any_int or int(user_input) in possilities:
+                return int(user_input)
+
+        str_possibilities = [str(x) for x in possilities]
+        print(f"Wrong input. Possible inputs: {', '.join(str_possibilities)}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Brocs")
+    parser.add_argument(
+        "input",
+        help="path to a input file with graph matrix or a directory with input files",
+    )
+
+    args = parser.parse_args()
+    args.input = Path(args.input).expanduser()
+
+    program = Program(args)  # type: ignore
+    program.run()
 
 
 if __name__ == "__main__":
