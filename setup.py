@@ -18,6 +18,7 @@ setup(
         "numpy",
         "matplotlib",
         "networkx",
+        "scipy"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
