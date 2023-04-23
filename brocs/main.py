@@ -228,13 +228,29 @@ def take_user_input(message: str, possilities: list[int], any_int=False) -> int:
         print(f"Wrong input. Possible inputs: {', '.join(str_possibilities)}")
 
 
+USAGE = """
+brocs <input>
+"""
+
+EPILOG = """
+This is a program for calculating graph colorings
+using Connected Sequential algorithm and comparing them to
+the algorithm that can be derived from Lovash proof of Brooks theorem.
+In the program we are calling that new algorithm Brooks algorithm.
+
+After running the program with provided input you will be presented with a menu
+"""
+
 def main():
-    parser = argparse.ArgumentParser(description="Brocs")
+    parser = argparse.ArgumentParser(
+        description="Brocs",
+        usage = USAGE,
+        epilog = EPILOG,
+    )
     parser.add_argument(
         "input",
-        help="path to a input file with graph matrix or a directory with input files",
+        help="Path to a input file with graph matrix or a directory with input files",
     )
-
     args = parser.parse_args()
     args.input = Path(args.input).expanduser()
 
