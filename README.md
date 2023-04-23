@@ -2,6 +2,10 @@
 
 Authors: Jakub Grzywaczewski, Tymoteusz Kwieciński
 
+## Prerequisites
+
+Python version 3.10 or higher
+
 ## Install
 ```bash
 pip install .
