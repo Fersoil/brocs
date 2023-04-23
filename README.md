@@ -35,6 +35,12 @@ You can run CS example with
 python3 examples/cs-example.py
 ```
  as a CLI tool
+
 ## Usage as a CLI tool
-WIP
+Start the program by providing the path to stored graphs in the *.npy files
+
+Run on examples:
+```bash
+brocs graph_files
+```
 
