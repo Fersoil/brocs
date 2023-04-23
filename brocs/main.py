@@ -9,7 +9,7 @@ import numpy as np
 
 from brocs.algorithms import (BrooksAlgorithm, ColoringAlgorithm,
                               ConnectedSequential)
-from brocs.evaluation import evaluate_graph
+from brocs.evaluation import evaluate_graph, time_ns_to_human_readable
 from brocs.visualization import show_colored_graph, show_graph
 
 logger = logging.getLogger(__name__)
@@ -20,9 +20,9 @@ class Settings(Protocol):
 
 
 def load_graph_from_file(file: Path) -> Optional[nx.Graph]:
-    loaded_file = np.load(file)
+    loaded_file = np.load(file, allow_pickle=True)
 
-    if not isinstance(loaded_file, np.matrix):
+    if not isinstance(loaded_file, np.ndarray):
         logger.error(f"File {file} is not a numpy matrix. Skipping...")
         return
 
@@ -54,7 +54,7 @@ class Program:
             for file in input_file_list:
                 graph = load_graph_from_file(file)
                 if graph is not None:
-                    new_graphs.update({path.stem: graph})
+                    new_graphs.update({file.stem: graph})
         elif path.is_file():
             graph = load_graph_from_file(path)
             if graph is not None:
@@ -102,14 +102,16 @@ class Program:
         choices = [1]
         if "BrooksAlgorithm" in results:
             print("2. Last coloring by Brooks Algorithm")
-            print("3. Best coloring found by Brooks Algorithm")
             choices.append(2)
-            choices.append(3)
+            if "best_coloring" in results["BrooksAlgorithm"]:
+                print("3. Best coloring found by Brooks Algorithm")
+                choices.append(3)
         if "ConnectedSequential" in results:
             print("4. Last coloring by Connected Sequential Algorithm")
-            print("5. Last coloring by Connected Sequential Algorithm")
             choices.append(4)
-            choices.append(5)
+            if "best_coloring" in results["ConnectedSequential"]:
+                print("5. Best coloring found by Connected Sequential Algorithm")
+                choices.append(5)
         choice = take_user_input("Which view do you pick? >>> ", choices)
 
         if choice == 1:
@@ -133,11 +135,12 @@ class Program:
         if repeat is None:
             for graph_name, graph_results in self.loaded_graphs.items():
                 alg_name = algorithm.name
-                print(f"  Running {algorithm} on graph: {graph_name}")
+                print(f"\n  Running {algorithm.name} on graph: {graph_name}")
                 new_results = evaluate_graph(graph_results.graph, algorithm)
                 graph_results.results.update({alg_name: {"last_result": new_results}})
+                time_str = time_ns_to_human_readable(new_results.time_elapsed)
                 print(
-                    f"  Finished running {algorithm} on graph: {graph_name} in {new_results.time_elapsed} seconds"  # noqa
+                    f"  Finished running {algorithm.name} on graph: {graph_name} in {time_str}\n"  # noqa
                 )
             return
 
@@ -147,7 +150,7 @@ class Program:
             colorings = []
             new_results = None
 
-            print(f"  Running {algorithm} on graph: {graph_name} {repeat} times")
+            print(f"\n  Running {algorithm.name} on graph: {graph_name} {repeat} times")
             for _ in range(repeat):
                 new_results = evaluate_graph(graph_results.graph, algorithm)
                 total_time += new_results.time_elapsed
@@ -160,11 +163,11 @@ class Program:
                     min_number_of_colors = len(coloring)
                     best_coloring = coloring
             average_time = total_time / repeat
-
+            time_str = time_ns_to_human_readable(int(average_time))
             print(
-                f"  Finished running {algorithm} on graph: {graph_name} in {average_time} seconds" # noqa
+                f"  Finished running {algorithm.name} on graph: {graph_name} in average of {time_str}" # noqa
             )
-            print(f"  Best coloring had {min_number_of_colors} colors")
+            print(f"  Best coloring had {min_number_of_colors} colors\n")
 
             graph_results.results.update(
                 {
@@ -178,7 +181,6 @@ class Program:
             )
 
     def run(self):
-        self.load_graphs()
         print("Here is what you can do: ")
         print("1. Visaize one of the loaded graphs or their calculated colorings")
         print("2. Run CS algorithm on loaded graphs (once)")
@@ -186,14 +188,16 @@ class Program:
         print("4. Run both algorithms on loaded graphs (n times) and compare results ")
         print("5. Load new graphs")
         print("6. Exit program")
-        choice = take_user_input("What do you want to do? >>> ", [1, 2, 3, 4, 5])
+        choice = take_user_input("What do you want to do? >>> ", list(range(1, 7)))
         if choice == 1:
             self.visualize_selected_graph()
             self.run()
         elif choice == 2:
             self.run_algorith_on_loaded_graphs(ConnectedSequential(random_state=42))
+            self.run()
         elif choice == 3:
             self.run_algorith_on_loaded_graphs(BrooksAlgorithm(random_state=42))
+            self.run()
         elif choice == 4:
             n = take_user_input(
                 "How many times do you want to run the algorithms? >>> ",
@@ -203,9 +207,11 @@ class Program:
             self.run_algorith_on_loaded_graphs(ConnectedSequential(), repeat=n)
             self.run_algorith_on_loaded_graphs(BrooksAlgorithm(), repeat=n)
             # TODO: Add comparison
+            self.run()
         elif choice == 5:
             input_path = input("Enter path to the folder with new graphs >>> ")
             self.load_graphs(new_graphs_path=Path(input_path).expanduser())
+            self.run()
         elif choice == 6:
             print("Exiting program...")
             exit(0)
@@ -233,6 +239,7 @@ def main():
     args.input = Path(args.input).expanduser()
 
     program = Program(args)  # type: ignore
+    program.load_graphs()
     program.run()
 
 
