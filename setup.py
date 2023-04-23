@@ -31,4 +31,7 @@ setup(
         "Topic :: Scientific/Engineering :: Mathematics",
         "Topic :: Scientific/Engineering :: Visualization",
     ],
+    entry_points={
+        'console_scripts': ['brocs=brocs.main:main']
+    }
 )
