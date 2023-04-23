@@ -4,14 +4,14 @@ import logging
 
 from brocs.algorithms.cs import ConnectedSequential
 from brocs.evaluation import evaluate_graph
-from brocs.graphs import fish_graph
+from brocs.graphs import fish
 from brocs.log import setup_custom_logger
 
 logger = setup_custom_logger("main", logging.DEBUG)
 
 
 def main():
-    G = fish_graph()
+    G = fish()
     nx.draw(G)  # uncolored
     plt.show()
     plt.clf()
