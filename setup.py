@@ -13,7 +13,10 @@ setup(
     derived from the Lovasz's proof of the Brooks' theorem.
     Additionaly it includes CS coloring algorithm 
     """,
-    packages=["brocs"],
+    packages=[
+        "brocs",
+        "brocs.algorithms",
+    ],
     install_requires=[
         "numpy",
         "matplotlib",
