@@ -2,6 +2,8 @@
 
 Authors: Jakub Grzywaczewski, Tymoteusz Kwieciński
 
+Github Repository: https://github.com/Fersoil/brocs
+
 ## Prerequisites
 
 Python version 3.10 or higher
