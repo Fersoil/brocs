@@ -182,7 +182,7 @@ class Program:
 
     def run(self):
         print("Here is what you can do: ")
-        print("1. Visaize one of the loaded graphs or their calculated colorings")
+        print("1. Visualize one of the loaded graphs or their calculated colorings")
         print("2. Run CS algorithm on loaded graphs (once)")
         print("3. Run Brooks algorithm on loaded graphs (once)")
         print("4. Run both algorithms on loaded graphs (n times) and compare results ")
