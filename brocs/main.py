@@ -159,8 +159,9 @@ class Program:
             best_coloring = None
             min_number_of_colors = float("inf")
             for coloring in colorings:
-                if len(coloring) < min_number_of_colors:
-                    min_number_of_colors = len(coloring)
+                number_of_unique_colors = len(set(coloring))
+                if number_of_unique_colors < min_number_of_colors:
+                    min_number_of_colors = number_of_unique_colors
                     best_coloring = coloring
             average_time = total_time / repeat
             time_str = time_ns_to_human_readable(int(average_time))
