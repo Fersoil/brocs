@@ -6,11 +6,13 @@ from typing import Any, Optional, Protocol
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 
 from brocs.algorithms import (BrooksAlgorithm, ColoringAlgorithm,
                               ConnectedSequential)
 from brocs.evaluation import evaluate_graph, time_ns_to_human_readable
 from brocs.visualization import show_colored_graph, show_graph
+from brocs.helpers import delta
 
 logger = logging.getLogger(__name__)
 
@@ -144,25 +146,26 @@ class Program:
                 )
             return
 
+
+        alg_name = algorithm.name
         for graph_name, graph_results in self.loaded_graphs.items():
-            alg_name = algorithm.name
-            total_time = 0
-            colorings = []
+            # df results (graph_name, alg_name, time, number_of_colors, coloring)
+            all_results = []
             new_results = None
 
             print(f"\n  Running {algorithm.name} on graph: {graph_name} {repeat} times")
             for _ in range(repeat):
                 new_results = evaluate_graph(graph_results.graph, algorithm)
-                total_time += new_results.time_elapsed
-                colorings.append(new_results.coloring)
+                all_results.append((graph_name, alg_name, new_results.time_elapsed, new_results.unique_colors, new_results.coloring)) # noqa
 
-            best_coloring = None
-            min_number_of_colors = float("inf")
-            for coloring in colorings:
-                if len(coloring) < min_number_of_colors:
-                    min_number_of_colors = len(coloring)
-                    best_coloring = coloring
-            average_time = total_time / repeat
+            df_results = pd.DataFrame(all_results, columns=["graph_name", "alg_name", "time", "number_of_colors", "coloring"]) # noqa
+
+            min_number_of_colors = df_results["number_of_colors"].min()
+            best_coloring = df_results[
+                df_results["number_of_colors"] == min_number_of_colors
+            ]["coloring"].iloc[0]
+            
+            average_time = df_results["time"].mean()
             time_str = time_ns_to_human_readable(int(average_time))
             print(
                 f"  Finished running {algorithm.name} on graph: {graph_name} in average of {time_str}" # noqa
@@ -176,9 +179,34 @@ class Program:
                         "average_time": average_time,
                         "min_number_of_colors": min_number_of_colors,
                         "best_coloring": best_coloring,
+                        "df_results": df_results,
                     }
                 }
             )
+
+    def export_results_to_csv(self):
+        list_graphs = []
+        # df graphs (graph_name, num_of_vertices, num_of_edges, big_detla)
+        for graph_name, graph_results in self.loaded_graphs.items():
+            assert "ConnectedSequential" in self.loaded_graphs[graph_name].results, "No CS results"
+            assert "BrooksAlgorithm" in self.loaded_graphs[graph_name].results, "No Brooks results"
+
+            graph = graph_results.graph
+            num_of_vertices = graph.number_of_nodes()
+            num_of_edges = graph.number_of_edges()
+            big_delta = delta(graph)
+            list_graphs.append((graph_name, num_of_vertices, num_of_edges, big_delta)) # noqa
+            
+        df_graphs = pd.DataFrame(list_graphs, columns=["graph_name", "num_of_vertices", "num_of_edges", "big_delta"]) # noqa
+        df_graphs.to_csv("graphs.csv", index=False)
+
+        all_df_results = [
+            graph_result.results[alg_name]["df_results"]
+            for graph_result in self.loaded_graphs.values()
+            for alg_name in ["ConnectedSequential", "BrooksAlgorithm"]
+        ]
+        df_results = pd.concat(all_df_results)
+        df_results.to_csv("results.csv", index=False)
 
     def run(self):
         print("Here is what you can do: ")
@@ -187,8 +215,9 @@ class Program:
         print("3. Run Brooks algorithm on loaded graphs (once)")
         print("4. Run both algorithms on loaded graphs (n times) and compare results ")
         print("5. Load new graphs")
-        print("6. Exit program")
-        choice = take_user_input("What do you want to do? >>> ", list(range(1, 7)))
+        print("6. Export findings to csv")
+        print("7. Exit program")
+        choice = take_user_input("What do you want to do? >>> ", list(range(1, 8)))
         if choice == 1:
             self.visualize_selected_graph()
             self.run()
@@ -213,6 +242,13 @@ class Program:
             self.load_graphs(new_graphs_path=Path(input_path).expanduser())
             self.run()
         elif choice == 6:
+            assert self.loaded_graphs, "No graphs loaded"
+            print("Exporting findings to csv...")
+            self.export_results_to_csv()
+            print("Exported findings to csv completed successfully\n\n")
+            
+            self.run()
+        elif choice == 7:
             print("Exiting program...")
             exit(0)
 
@@ -251,8 +287,16 @@ def main():
         "input",
         help="Path to a input file with graph matrix or a directory with input files",
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print debug messages",
+    )
     args = parser.parse_args()
     args.input = Path(args.input).expanduser()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
 
     program = Program(args)  # type: ignore
     program.load_graphs()
@@ -261,3 +305,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
