@@ -20,6 +20,7 @@ setup(
     install_requires=[
         "numpy",
         "matplotlib",
+        "pandas"
         "networkx",
         "scipy"
     ],
