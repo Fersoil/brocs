@@ -42,7 +42,7 @@ def cavemen() -> nx.Graph:
     return nx.connected_caveman_graph(3, 4)
 
 def dense_random() -> nx.Graph:
-    return nx.dense_gnm_random_graph(50, 10000)
+    return nx.dense_gnm_random_graph(100, 2000)
 
 def random() -> nx.Graph:
     return nx.gnm_random_graph(300, 1500)

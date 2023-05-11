@@ -1,0 +1,10 @@
+graph_name,num_of_vertices,num_of_edges,big_delta
+bipartite,7,10,5
+dense_random,100,2000,54
+double_twin_kite,18,27,3
+erdos_renyi,10,20,7
+fence,11,10,3
+fish,7,11,5
+path,8,7,2
+random,300,1500,25
+twin_kite,10,14,3
