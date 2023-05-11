@@ -99,7 +99,7 @@ class Program:
         graph = self.loaded_graphs[choosen_graph].graph
         results = self.loaded_graphs[choosen_graph].results
 
-        print("Possible vies of the graph: ")
+        print("Possible views of the graph: ")
         print("1. Barebone Graph")
         choices = [1]
         if "BrooksAlgorithm" in results:

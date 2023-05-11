@@ -124,17 +124,21 @@ class BrooksAlgorithm(ColoringAlgorithm):
 
                 subG = G.subgraph(component)
                 subG_size = len(component)
-                sub_colors = self.cs_algorithm.color_graph(subG)
+                sub_colors = self.color_graph(subG)
                 sub_dict = dict(zip(range(subG_size), subG))
 
                 for i in range(subG_size):
                     colors[sub_dict[i]] = sub_colors[i]
+                
+                logger.info(sub_colors)
 
                 restG = G.subgraph(rest_of_graph)
                 restG_size = len(rest_of_graph)
-                rest_colors = self.cs_algorithm.color_graph(restG)
+                rest_colors = self.color_graph(restG)
                 rest_dict = dict(zip(range(restG_size), restG))
                 re_rest_dict = dict(zip(restG, range(restG_size)))
+
+                logger.info(rest_colors)
 
                 for neighbor in set_x_neighbors & set(component):
                     neighbor_colors.add(colors[neighbor])
