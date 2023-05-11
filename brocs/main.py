@@ -8,8 +8,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from brocs.algorithms import (BrooksAlgorithm, ColoringAlgorithm,
-                              ConnectedSequential)
+from brocs.algorithms import BrooksAlgorithm, ColoringAlgorithm, ConnectedSequential
 from brocs.evaluation import evaluate_graph, time_ns_to_human_readable
 from brocs.visualization import show_colored_graph, show_graph
 from brocs.helpers import delta
@@ -146,7 +145,6 @@ class Program:
                 )
             return
 
-
         alg_name = algorithm.name
         for graph_name, graph_results in self.loaded_graphs.items():
             # df results (graph_name, alg_name, time, number_of_colors, coloring)
@@ -156,19 +154,36 @@ class Program:
             print(f"\n  Running {algorithm.name} on graph: {graph_name} {repeat} times")
             for _ in range(repeat):
                 new_results = evaluate_graph(graph_results.graph, algorithm)
-                all_results.append((graph_name, alg_name, new_results.time_elapsed, new_results.unique_colors, new_results.coloring)) # noqa
+                all_results.append(
+                    (
+                        graph_name,
+                        alg_name,
+                        new_results.time_elapsed,
+                        new_results.unique_colors,
+                        new_results.coloring,
+                    )
+                )
 
-            df_results = pd.DataFrame(all_results, columns=["graph_name", "alg_name", "time", "number_of_colors", "coloring"]) # noqa
+            df_results = pd.DataFrame(
+                all_results,
+                columns=[
+                    "graph_name",
+                    "alg_name",
+                    "time",
+                    "number_of_colors",
+                    "coloring",
+                ],
+            )
 
             min_number_of_colors = df_results["number_of_colors"].min()
             best_coloring = df_results[
                 df_results["number_of_colors"] == min_number_of_colors
             ]["coloring"].iloc[0]
-            
+
             average_time = df_results["time"].mean()
             time_str = time_ns_to_human_readable(int(average_time))
             print(
-                f"  Finished running {algorithm.name} on graph: {graph_name} in average of {time_str}" # noqa
+                f"  Finished running {algorithm.name} on graph: {graph_name} in average of {time_str}"
             )
             print(f"  Best coloring had {min_number_of_colors} colors\n")
 
@@ -188,16 +203,25 @@ class Program:
         list_graphs = []
         # df graphs (graph_name, num_of_vertices, num_of_edges, big_detla)
         for graph_name, graph_results in self.loaded_graphs.items():
-            assert "ConnectedSequential" in self.loaded_graphs[graph_name].results, "No CS results"
-            assert "BrooksAlgorithm" in self.loaded_graphs[graph_name].results, "No Brooks results"
+            assert (
+                "ConnectedSequential" in self.loaded_graphs[graph_name].results
+            ), "No CS results"
+            assert (
+                "BrooksAlgorithm" in self.loaded_graphs[graph_name].results
+            ), "No Brooks results"
 
             graph = graph_results.graph
             num_of_vertices = graph.number_of_nodes()
             num_of_edges = graph.number_of_edges()
             big_delta = delta(graph)
-            list_graphs.append((graph_name, num_of_vertices, num_of_edges, big_delta)) # noqa
-            
-        df_graphs = pd.DataFrame(list_graphs, columns=["graph_name", "num_of_vertices", "num_of_edges", "big_delta"]) # noqa
+            list_graphs.append(
+                (graph_name, num_of_vertices, num_of_edges, big_delta)
+            )
+
+        df_graphs = pd.DataFrame(
+            list_graphs,
+            columns=["graph_name", "num_of_vertices", "num_of_edges", "big_delta"],
+        )
         df_graphs.to_csv("graphs.csv", index=False)
 
         all_df_results = [
@@ -246,7 +270,7 @@ class Program:
             print("Exporting findings to csv...")
             self.export_results_to_csv()
             print("Exported findings to csv completed successfully\n\n")
-            
+
             self.run()
         elif choice == 7:
             print("Exiting program...")
@@ -277,11 +301,12 @@ In the program we are calling that new algorithm Brooks algorithm.
 After running the program with provided input you will be presented with a menu
 """
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Brocs",
-        usage = USAGE,
-        epilog = EPILOG,
+        usage=USAGE,
+        epilog=EPILOG,
     )
     parser.add_argument(
         "input",
@@ -305,4 +330,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

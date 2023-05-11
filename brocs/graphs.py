@@ -8,8 +8,10 @@ def fish() -> nx.Graph:
 def path() -> nx.Graph:
     return nx.path_graph(8)
 
+
 def erdos_renyi() -> nx.Graph:
     return nx.gnm_random_graph(10, 20, seed=44)
+
 
 def fence() -> nx.Graph:
     G = nx.Graph()
