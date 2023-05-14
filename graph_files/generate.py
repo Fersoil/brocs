@@ -23,6 +23,8 @@ def write_graph_to_file(graph: nx.Graph, name: str, random: bool = False):
     dir = Path(__file__).parent
     if random:
         dir = dir.parent / "random_graph_files"
+        if not dir.exists():
+            dir.mkdir()
 
     path = dir / f"{name}.npy"
     if path.exists():
