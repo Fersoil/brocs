@@ -2,6 +2,7 @@ from pathlib import Path
 
 import networkx as nx
 import numpy as np
+from random import choices as choices
 
 from brocs.graphs import (
     bipartite,
@@ -13,8 +14,8 @@ from brocs.graphs import (
     double_twin_kite,
     diamond,
     cavemen,
-    random,
-    dense_random,
+    random_gen,
+    dense_random_gen,
 )
 
 
@@ -60,19 +61,29 @@ def main() -> None:
     ):
         write_graph_to_file(graph_creator(), name)
 
-    for i in range(1, 6):
-        for n_nodes in [10, 20, 50, 100, 200]:
-            for n_edges in [5, 10, 20, 50, 100, 200, 500, 1000]:
+    for n_nodes in [10, 20, 50, 100, 200, 500]:
+        for n_edges in [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]:
+            if n_edges > n_nodes * (n_nodes - 1) / 2:
+                continue
 
-                if n_edges > n_nodes * (n_nodes - 1) / 2:
-                    continue
+            random_graphs = [random_gen(n_nodes, n_edges) for _ in range(20)]
+            random_dense_graphs = [dense_random_gen(n_nodes, n_edges) for _ in range(20)]
 
+            connected = [g for g in random_graphs if nx.is_connected(g)]
+            connected_dense = [g for g in random_dense_graphs if nx.is_connected(g)]
+
+            if len(connected) < 5 or len(connected_dense) < 5:
+                continue
+
+            for i, g in enumerate(choices(connected, k=5)):
                 write_graph_to_file(
-                    random(n_nodes, n_edges),
+                    g,
                     f"random_{n_nodes}_{n_edges}_g{i}", random = True
                 )
+
+            for i, g in enumerate(choices(connected_dense, k=5)):
                 write_graph_to_file(
-                    dense_random(n_nodes, n_edges),
+                    g,
                     f"dense_random_{n_nodes}_{n_edges}_g{i}", random = True
                 )
 

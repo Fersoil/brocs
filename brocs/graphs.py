@@ -42,10 +42,10 @@ def erdos_renyi() -> nx.Graph:
 def cavemen() -> nx.Graph:
     return nx.connected_caveman_graph(3, 4)
 
-def dense_random(n_nodes: int, n_edges: int) -> nx.Graph:
+def dense_random_gen(n_nodes: int, n_edges: int) -> nx.Graph:
     return nx.dense_gnm_random_graph(n_nodes, n_edges)
 
-def random(n_nodes: int, n_edges: int) -> nx.Graph:
+def random_gen(n_nodes: int, n_edges: int) -> nx.Graph:
     return nx.gnm_random_graph(n_nodes, n_edges)
 
 
