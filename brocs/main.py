@@ -187,6 +187,9 @@ class Program:
             )
             print(f"  Best coloring had {min_number_of_colors} colors\n")
 
+            # Ddrop the coloring column
+            df_results = df_results.drop(columns=["coloring"])
+
             graph_results.results.update(
                 {
                     alg_name: {
