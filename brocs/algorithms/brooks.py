@@ -10,6 +10,7 @@ Brooks theorem algorithm
 import logging
 from queue import LifoQueue, Queue
 from typing import List, Optional
+import random
 
 import networkx as nx
 
@@ -55,6 +56,8 @@ class BrooksAlgorithm(ColoringAlgorithm):
         mapping = dict(zip(nodes, range(len(nodes))))
         G = nx.relabel_nodes(G, mapping)
         nodes = G.nodes()
+        if self.random_state is not None:
+            random.seed(self.random_state)
 
         # Define number of verticies
         number_of_nodes = len(nodes)
@@ -88,7 +91,12 @@ class BrooksAlgorithm(ColoringAlgorithm):
 
         # Serach for optimal a and b vertexes
         is_two_connected = True
-        for pair in S:
+
+        S_list = list(S)
+        random.shuffle(S_list) # add some randomness to the algorithm - thanks to this trick it will give better results sometimes
+        logger.debug(S_list)
+
+        for pair in S_list:
             reduced_vertices = [i for i in range(number_of_nodes) if i not in pair]
             subG = nx.induced_subgraph(G, reduced_vertices)
             if nx.is_connected(subG):
